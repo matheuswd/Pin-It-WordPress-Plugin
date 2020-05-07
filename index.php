@@ -39,23 +39,12 @@ if ( ! defined( 'WPINC' ) ) {
 define( 'LPIB_VERSION', '1.0.0' );
 
 /**
- * The code that runs during plugin activation.
- * This action is documented in includes/class-plugin-name-activator.php
+ * Register and enqueue scripts
+ * @return void
  */
-
-// <a data-pin-do="buttonPin" href="https://www.pinterest.com/pin/create/button/?url=http://www.foodiecrush.com/2014/03/filet-mignon-with-porcini-mushroom-compound-butter/&media=https://i.pinimg.com/736x/17/34/8e/17348e163a3212c06e61c41c4b22b87a.jpg&description=So%20delicious!" data-pin-shape="round"></a>
-// 
-
 function lpib_enqueue_scripts() {
 	wp_register_script( 'pinit-pinterest', 'https://assets.pinterest.com/js/pinit.js', null, null, true );
 	wp_register_script( 'add-pin-it', plugin_dir_url( __FILE__ ) . 'public/js/add-pin-it.js', null, null, true );
-
-	
-	$dataToBePassed = array(
-    	'home'            => get_stylesheet_directory_uri(),
-	);
-
-	wp_localize_script( 'add-pin-it', 'php_vars', $dataToBePassed );
 
 	wp_enqueue_script( 'pinit-pinterest' );
 	wp_enqueue_script( 'add-pin-it' );
@@ -63,12 +52,32 @@ function lpib_enqueue_scripts() {
 
 add_action('wp_enqueue_scripts', 'lpib_enqueue_scripts');
 
+/**
+ * Register and enqueue styles
+ * @return void
+ */
+function lpib_enqueue_styles() {
+	wp_register_style( 'my_css', plugin_dir_url( __FILE__ ) . 'public/styles/lpib-style.css', array(), false, 'all' );
+    wp_enqueue_style ( 'my_css' );
+}
+
+add_action( 'wp_enqueue_scripts', 'lpib_enqueue_styles' );
 
 
+function add_pinit_class($content){
 
+        $content = mb_convert_encoding($content, 'HTML-ENTITIES', "UTF-8");
+        $document = new DOMDocument();
+        libxml_use_internal_errors(true);
+        $document->loadHTML(utf8_decode($content));
 
+        $imgs = $document->getElementsByTagName('img');
+        foreach ($imgs as $img) {
+           $img->setAttribute('class','pinit');
+        }
 
+        $html = $document->saveHTML();
+        return $html;
+}
 
-
-
-
+add_filter('the_content', 'add_pinit_class');
